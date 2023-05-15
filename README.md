@@ -4,7 +4,6 @@
 
 - [Introduction](#introduction)
 - [Algorithm Overview](#algorithm-overview)
-- [Implementation Details](#implementation-details)
 - [Updating User Features](#updating-user-features)
 - [Note on user features](#note-on-user-features)
 - [Issues](#issues)
@@ -12,7 +11,11 @@
 
 ## Introduction
 
-Developed for an ecommerce app, this code presents a simple implementation of the nearest neighbor recommendation algorithm for an e-commerce app (in this case an ionic app) using K-Nearest Neighbors. The algorithm recommends similar product categories to users based on their purchase history. It is deployed on Firebase Cloud Functions, which offloads computation from the client device to a serverless infrastructure, improving performance and scalability. The recommendation function is invoked by another cloud function that selects random products from the suggested categories, these products are then sent to the client-app.
+Developed for an ecommerce app, this code presents a simple implementation of the nearest neighbor recommendation algorithm for an e-commerce app (in this case an Ionic Angular app) using K-Nearest Neighbors. The algorithm recommends similar product categories to users based on how they interact with products on the platform. It is deployed on Firebase Cloud Functions, which offloads computation from the client device to a serverless infrastructure, improving performance and scalability. The recommendation function is invoked by another cloud function that selects random products from the suggested categories, these products are then sent to the client-app.
+
+Recommendations are based on 2 types of features:
+- Personal features such as age and gender,
+- Category interest features
 
 ## Algorithm Overview
 
@@ -20,7 +23,7 @@ The code loads a dataset from Google Cloud Storage, applies z-score normalizatio
 
 ## Updating User Features
 
-In an e-commerce app, it's important to keep track of a user's preferences and interests in different product categories. To achieve this the user's features are updated whenever a product is viewed, such as adding it to their cart, or making a purchase.
+In an e-commerce app, it's important to keep track of a user's preferences and interests in different product categories. To achieve this the user's features are updated whenever a product is viewed, added to cart, or purchased.
 
 In the `user.service.ts` I define the `updateUserFeatures` function shown below it uses Firebase Cloud Firestore. You can also find the `userProfile` Interface with the 97 features.
 
@@ -57,6 +60,7 @@ There are a few issues with the current implementation that should be addressed 
 
 - Dataset quality: The dataset provided by the client was not reliable and was collected over a short time. To address this, there is a need to update the dataset with user features of new people who sign up to improve the quality and reliability of the data. Additionally, more data from diverse user demographics should be collected to ensure that the algorithm can accurately recommend products to a wider range of users.
 
+- Additional information can be utilized as features in the recommendation system. For instance, a user's social status can be inferred based on the device they use, which could be categorized as lower, middle, or upper income. It may not be appropriate to suggest low qaulity products to individuals in the upper income category. Similarly, the current implementation does not employ user search queries to generate recommendations.
 
 ## Conclusion
 

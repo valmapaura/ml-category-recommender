@@ -162,59 +162,7 @@ export class UserService {
     });
   }
 
-  async createUserDetails(formValues) {
-
-    console.log('Passed in to create User Details: ' + formValues.email + formValues.gender + formValues.birthday );
-    const userData: userData = {
-      birthday: formValues.birthday,
-      email: formValues.email,
-      phone: '',
-      name: formValues.name ?? '',
-      surname: formValues.surname ?? '',
-      timestamp: new Date(),
-      city: '',
-      isMerchant: false,
-      gender: formValues.gender,
-    };
-    this.afAuth.authState.pipe(
-      filter(user => !!user),
-      switchMap(user => {
-        const merchantDocRef = this.firestore.doc(`users/${user.uid}/`);
-        console.log('writing to firebase: ' + formValues.email + formValues.gender + formValues.birthday );
-        console.log( 'userData ' + userData.email + userData.gender +userData.birthday);
-        return merchantDocRef.set(userData);
-      })
-    ).subscribe(() => {
-      console.log('User details added to Firestore');
-    }, error => {
-      console.error('Error adding merchant details to Firestore:', error);
-    });
-  }
-
-  async deleteUserAccount(currentPassword: string): Promise<void> {
-    const user = await this.afAuth.currentUser;
-    const userDetails = this.UserDetails[0];
-
-    if (userDetails && userDetails.isMerchant) {
-      this.showToast('Please delete your merchant account first before deleting your user account.', 'danger');
-      return;
-    }
-
-    // Reauthenticate the user with their current password
-    const credential = EmailAuthProvider.credential(user.email, currentPassword);
-    await reauthenticateWithCredential(user, credential);
-
-    //delete firestore user data
-    try {
-      await this.firestore.collection(`users`).doc(user.uid).delete();
-    } catch (error) {
-      console.error('Error deleting user data from Firestore', error);
-    }
-
-    // Delete the user's account
-    await user.delete();
-  }
-
+  //on signup these features are created 
   async createUserProfile(formValues) {
     const userProfile: userProfile = {
       city: 0, // in future we will need to code all cities
@@ -321,6 +269,29 @@ export class UserService {
     await userDetailDocRef.set(userProfile);
   }
 
+  calculateAge(birthday: string): number {
+    const today = new Date();
+    const birthDate = new Date(birthday);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  getGenderCode(gender: string): number {
+    if (gender.toLowerCase() === 'other') {
+      return 0;
+    } else if (gender.toLowerCase() === 'male') {
+      return 1;
+    } else if (gender.toLowerCase() === 'female') {
+      return 2;
+    } else {
+      throw new Error('Invalid gender value');
+    }
+  }
+
   async updateUserDetails(fieldsToUpdate: Partial<userData>): Promise<void> {
     const user = await this.afAuth.currentUser;
     if (user) {
@@ -352,6 +323,59 @@ export class UserService {
     }
   }
 
+  async createUserDetails(formValues) {
+
+    console.log('Passed in to create User Details: ' + formValues.email + formValues.gender + formValues.birthday );
+    const userData: userData = {
+      birthday: formValues.birthday,
+      email: formValues.email,
+      phone: '',
+      name: formValues.name ?? '',
+      surname: formValues.surname ?? '',
+      timestamp: new Date(),
+      city: '',
+      isMerchant: false,
+      gender: formValues.gender,
+    };
+    this.afAuth.authState.pipe(
+      filter(user => !!user),
+      switchMap(user => {
+        const merchantDocRef = this.firestore.doc(`users/${user.uid}/`);
+        console.log('writing to firebase: ' + formValues.email + formValues.gender + formValues.birthday );
+        console.log( 'userData ' + userData.email + userData.gender +userData.birthday);
+        return merchantDocRef.set(userData);
+      })
+    ).subscribe(() => {
+      console.log('User details added to Firestore');
+    }, error => {
+      console.error('Error adding merchant details to Firestore:', error);
+    });
+  }
+
+  async deleteUserAccount(currentPassword: string): Promise<void> {
+    const user = await this.afAuth.currentUser;
+    const userDetails = this.UserDetails[0];
+
+    if (userDetails && userDetails.isMerchant) {
+      this.showToast('Please delete your merchant account first before deleting your user account.', 'danger');
+      return;
+    }
+
+    // Reauthenticate the user with their current password
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+
+    //delete firestore user data
+    try {
+      await this.firestore.collection(`users`).doc(user.uid).delete();
+    } catch (error) {
+      console.error('Error deleting user data from Firestore', error);
+    }
+
+    // Delete the user's account
+    await user.delete();
+  }
+
   getUserDetails(): Observable<userData> {
     return this.afAuth.authState.pipe(
       filter(user => !!user),
@@ -360,29 +384,6 @@ export class UserService {
         return userDetailDocRef.valueChanges();
       })
     );
-  }
-
-  calculateAge(birthday: string): number {
-    const today = new Date();
-    const birthDate = new Date(birthday);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  }
-
-  getGenderCode(gender: string): number {
-    if (gender.toLowerCase() === 'other') {
-      return 0;
-    } else if (gender.toLowerCase() === 'male') {
-      return 1;
-    } else if (gender.toLowerCase() === 'female') {
-      return 2;
-    } else {
-      throw new Error('Invalid gender value');
-    }
   }
 
   //save user search queries to firestore only if the current search term is different from the last 10
